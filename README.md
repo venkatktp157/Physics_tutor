@@ -1,10 +1,10 @@
-# 🇫🇷 French Grammar Tutor — Streamlit App Powered by Groq
+# 🇫🇷 Physics Tutor — Streamlit App Powered by Groq
 
-An educational dual-agent chatbot for learning French grammar. One agent asks grammar questions in French, and the other responds with proper explanations and English translations — powered by Groq's high-performance LLM.
+An educational dual-agent chatbot for learning Physics. One agent asks grammar questions in Physics, and the other responds with proper explanations in English — powered by Groq's high-performance LLM.
 
 ## 🚀 Features
 
-- AI teacher trained to answer French grammar queries
+- AI teacher trained to answer Physics queries
 - Translates responses into English
 - Looping Q&A until terminated manually
 - Streamlit UI + Groq backend via LangChain
@@ -20,7 +20,7 @@ An educational dual-agent chatbot for learning French grammar. One agent asks gr
 
 ```bash
 git clone https://github.com/yourusername/FrenchGrammarTutor.git
-cd FrenchGrammarTutor
+cd Physics_tutor
 
 # Optional: create environment
 python -m venv tutor_env
