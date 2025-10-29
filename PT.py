@@ -18,7 +18,7 @@ if not groq_api_key or not openai.api_key:
 # 🚀 Initialize Groq model
 chat = ChatGroq(api_key=groq_api_key, model_name="llama-3.3-70b-versatile")
 
-# 🧠 Setup memory
+# 🧠 Setup memory and state
 if "memory" not in st.session_state:
     st.session_state.memory = ConversationBufferMemory(return_messages=True)
 if "follow_up_question" not in st.session_state:
@@ -55,18 +55,21 @@ if not terminate:
             st.markdown("### 🧑‍🏫 Teacher's Response")
             st.write(response.content)
 
-            # 🖼️ Generate image
+            # 🖼️ Try image generation
             with st.spinner("Generating visual explanation..."):
-                image_prompt = f"Physics diagram illustrating: {student_input}"
-                image_response = openai.images.generate(
-                    model="dall-e-3",
-                    prompt=image_prompt,
-                    size="1024x1024",
-                    quality="standard",
-                    n=1
-                )
-                image_url = image_response.data[0].url
-                st.image(image_url, caption="Visual Explanation")
+                try:
+                    image_prompt = f"Physics diagram illustrating: {student_input}"
+                    image_response = openai.images.generate(
+                        model="dall-e-3",
+                        prompt=image_prompt,
+                        size="1024x1024",
+                        quality="standard",
+                        n=1
+                    )
+                    image_url = image_response.data[0].url
+                    st.image(image_url, caption="Visual Explanation")
+                except Exception as img_error:
+                    st.warning(f"⚠️ Image generation skipped: {img_error}")
 
             # 👨‍🎓 Ask follow-up question
             follow_up = chat.invoke([HumanMessage(content="Ask the student a follow-up question to reinforce learning.")])
