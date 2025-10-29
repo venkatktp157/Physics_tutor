@@ -71,8 +71,16 @@ if not terminate:
                 except Exception as img_error:
                     st.warning(f"⚠️ Image generation skipped: {img_error}")
 
-            # 👨‍🎓 Ask follow-up question
-            follow_up = chat.invoke([HumanMessage(content="Ask the student a follow-up question to reinforce learning.")])
+            # 👨‍🎓 Ask specific follow-up question
+            follow_up_prompt = f"""
+            You just explained the following physics concept to a student: {student_input}
+
+            Now ask a specific follow-up question that applies the concept in a real-world scenario.
+            Make sure the question is clear and invites the student to reason through the physics.
+
+            Example: "What happens when you slam the brakes while driving?"
+            """
+            follow_up = chat.invoke([HumanMessage(content=follow_up_prompt)])
             st.session_state.follow_up_question = follow_up.content
             st.session_state.awaiting_answer = True
             st.markdown("### 👨‍🎓 Follow-Up Question")
@@ -89,7 +97,6 @@ if not terminate:
 
         if student_followup:
             try:
-                # 🧑‍🏫 Evaluate the student's answer
                 evaluation_prompt = f"""
                 You are a physics teacher. A student answered your follow-up question.
 
