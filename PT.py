@@ -25,8 +25,6 @@ if "follow_up_question" not in st.session_state:
     st.session_state.follow_up_question = None
 if "awaiting_answer" not in st.session_state:
     st.session_state.awaiting_answer = False
-if "student_followup_input" not in st.session_state:
-    st.session_state.student_followup_input = ""
 
 st.title("🧑‍🏫 Physics Tutor - Dual Agent App")
 
@@ -107,20 +105,16 @@ if st.session_state.awaiting_answer and st.session_state.follow_up_question:
     st.markdown("### 👨‍🎓 Follow-Up Question")
     st.write(f"**{st.session_state.follow_up_question}**")
 
-    st.session_state.student_followup_input = st.text_input(
-        "✍️ Your Answer to the Follow-Up Question",
-        value=st.session_state.student_followup_input,
-        key="student_followup_input"
-    )
+    student_followup = st.text_input("✍️ Your Answer to the Follow-Up Question", key="student_followup_input")
 
     if st.button("✅ Submit Answer"):
-        if st.session_state.student_followup_input.strip():
+        if student_followup.strip():
             try:
                 evaluation_prompt = f"""
                 You are a physics teacher. A student answered your follow-up question.
 
                 Follow-up question: {st.session_state.follow_up_question}
-                Student's answer: {st.session_state.student_followup_input}
+                Student's answer: {student_followup}
 
                 Please:
                 1. Evaluate the student's answer.
@@ -135,7 +129,6 @@ if st.session_state.awaiting_answer and st.session_state.follow_up_question:
                 # Reset state
                 st.session_state.follow_up_question = None
                 st.session_state.awaiting_answer = False
-                st.session_state.student_followup_input = ""
 
             except Exception as e:
                 st.error(f"❌ Evaluation error: {e}")
