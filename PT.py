@@ -54,17 +54,19 @@ if not terminate:
             st.markdown("### 🧑‍🏫 Teacher's Response")
             st.write(response.content)
 
-            # 🖼️ Generate image based on student question
+            # 🖼️ Generate image using OpenAI's new SDK
             with st.spinner("Generating visual explanation..."):
                 image_prompt = f"Physics diagram illustrating: {student_input}"
-                image_response = openai.Image.create(
+                image_response = openai.images.generate(
+                    model="dall-e-3",
                     prompt=image_prompt,
-                    n=1,
-                    size="512x512"
+                    size="1024x1024",
+                    quality="standard",
+                    n=1
                 )
-                image_url = image_response['data'][0]['url']
+                image_url = image_response.data[0].url
                 st.image(image_url, caption="Visual Explanation")
-
+                
             # 👨‍🎓 Ask follow-up question
             follow_up = chat.invoke([HumanMessage(content="Ask the student a follow-up question to reinforce learning.")])
             st.markdown("### 👨‍🎓 Student's Turn")
