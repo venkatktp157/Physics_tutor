@@ -18,26 +18,25 @@ if not groq_api_key or not openai.api_key:
 # 🚀 Initialize Groq model
 chat = ChatGroq(api_key=groq_api_key, model_name="llama-3.3-70b-versatile")
 
-# 🧠 Setup memory and state
-if "memory" not in st.session_state:
-    st.session_state.memory = ConversationBufferMemory(return_messages=True)
-if "follow_up_question" not in st.session_state:
-    st.session_state.follow_up_question = None
-if "awaiting_answer" not in st.session_state:
-    st.session_state.awaiting_answer = False
-if "teacher_response" not in st.session_state:
-    st.session_state.teacher_response = None
+# 🧠 Ensure session state keys are initialized early
+default_state = {
+    "memory": ConversationBufferMemory(return_messages=True),
+    "follow_up_question": None,
+    "awaiting_answer": False,
+    "teacher_response": None,
+    "student_followup_input": ""
+}
+for key, value in default_state.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 st.title("🧑‍🏫 Physics Tutor - Dual Agent App")
 
 # 🔄 Clear button to reset and ask a new question
 if st.button("🔄 Ask Another Question"):
-    for key in ["follow_up_question", "awaiting_answer", "teacher_response", "student_followup_input"]:
-        if key in st.session_state:
-            del st.session_state[key]
-    st.experimental_set_query_params()  # optional: clears URL state
+    for key in default_state.keys():
+        st.session_state[key] = default_state[key]
     st.success("Ready for your next question!")
-
 
 # 🧑‍🎓 Student asks a physics question
 if not st.session_state.awaiting_answer:
@@ -66,13 +65,13 @@ if not st.session_state.awaiting_answer:
             st.markdown("### 🧑‍🏫 Teacher's Response")
             st.write(response.content)
 
-            # Extract follow-up question from teacher response
+            # 🔍 Extract follow-up question from teacher response
             for line in response.content.splitlines():
                 if "Follow-up question:" in line:
                     st.session_state.follow_up_question = line.replace("Follow-up question:", "").strip()
                     break
 
-            # Fallback if not found
+            # 🧠 Fallback if not found
             if not st.session_state.follow_up_question:
                 fallback_prompt = f"""
                 You just explained this physics concept: "{student_input}"
@@ -97,7 +96,7 @@ if not st.session_state.awaiting_answer:
                     st.image(image_url, caption="Visual Explanation")
                 except Exception as img_error:
                     st.warning(f"⚠️ Image generation skipped: {img_error}")
-                    
+
             st.session_state.awaiting_answer = True
 
         except Exception as e:
@@ -129,7 +128,6 @@ if st.session_state.awaiting_answer and st.session_state.follow_up_question:
                 st.markdown("### 🧑‍🏫 Teacher's Evaluation")
                 st.write(evaluation.content)
 
-                # Show clear button to proceed
                 st.success("✅ Evaluation complete. You can now ask another question using the 🔄 button above.")
 
             except Exception as e:
