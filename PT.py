@@ -66,6 +66,22 @@ if not st.session_state.awaiting_answer:
             st.markdown("### 🧑‍🏫 Teacher's Response")
             st.write(response.content)
 
+            # Extract follow-up question from teacher response
+            for line in response.content.splitlines():
+                if "Follow-up question:" in line:
+                    st.session_state.follow_up_question = line.replace("Follow-up question:", "").strip()
+                    break
+
+            # Fallback if not found
+            if not st.session_state.follow_up_question:
+                fallback_prompt = f"""
+                You just explained this physics concept: "{student_input}"
+
+                The teacher forgot to include a follow-up question. Please generate one that applies this concept in a real-world scenario and invites the student to reason through it.
+                """
+                fallback_response = chat.invoke([HumanMessage(content=fallback_prompt)])
+                st.session_state.follow_up_question = fallback_response.content.strip()
+
             # 🖼️ Try image generation
             with st.spinner("Generating visual explanation..."):
                 try:
@@ -81,17 +97,7 @@ if not st.session_state.awaiting_answer:
                     st.image(image_url, caption="Visual Explanation")
                 except Exception as img_error:
                     st.warning(f"⚠️ Image generation skipped: {img_error}")
-
-            # Extract follow-up question from teacher response
-            for line in response.content.splitlines():
-                if "Follow-up question:" in line:
-                    st.session_state.follow_up_question = line.replace("Follow-up question:", "").strip()
-                    break
-
-            # Fallback if not found
-            if not st.session_state.follow_up_question:
-                st.session_state.follow_up_question = "Imagine you're driving and suddenly slam the brakes. How do Newton's three laws apply?"
-
+                    
             st.session_state.awaiting_answer = True
 
         except Exception as e:
