@@ -32,11 +32,12 @@ st.title("🧑‍🏫 Physics Tutor - Dual Agent App")
 
 # 🔄 Clear button to reset and ask a new question
 if st.button("🔄 Ask Another Question"):
-    st.session_state.follow_up_question = None
-    st.session_state.awaiting_answer = False
-    st.session_state.teacher_response = None
-    st.session_state.student_followup_input = ""
-    st.experimental_rerun()
+    for key in ["follow_up_question", "awaiting_answer", "teacher_response", "student_followup_input"]:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.experimental_set_query_params()  # optional: clears URL state
+    st.success("Ready for your next question!")
+
 
 # 🧑‍🎓 Student asks a physics question
 if not st.session_state.awaiting_answer:
