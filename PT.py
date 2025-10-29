@@ -81,17 +81,23 @@ if not terminate:
             Example: "What happens when you slam the brakes while driving?"
             """
             follow_up = chat.invoke([HumanMessage(content=follow_up_prompt)])
-            st.session_state.follow_up_question = follow_up.content
+            follow_up_text = follow_up.content.strip()
+
+            # Ensure it's not vague
+            if "what topic" in follow_up_text.lower() or "how can I assist" in follow_up_text.lower():
+                follow_up_text = "Imagine you're driving and suddenly slam the brakes. How do Newton's three laws apply?"
+
+            st.session_state.follow_up_question = follow_up_text
             st.session_state.awaiting_answer = True
             st.markdown("### 👨‍🎓 Follow-Up Question")
-            st.write(follow_up.content)
+            st.write(f"**{follow_up_text}**")
 
         except Exception as e:
             st.error(f"❌ Error: {e}")
 
     elif st.session_state.awaiting_answer:
         st.markdown("### 👨‍🎓 Follow-Up Question")
-        st.write(st.session_state.follow_up_question)
+        st.write(f"**{st.session_state.follow_up_question}**")
 
         student_followup = st.text_input("✍️ Your Answer to the Follow-Up Question")
 
