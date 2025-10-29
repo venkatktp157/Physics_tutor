@@ -1,0 +1,10 @@
+streamlit
+langchain==0.0.310
+langchain-groq
+langchain-core
+openai
+numpy==1.26.4
+pyarrow
+pandas
+tqdm
+
