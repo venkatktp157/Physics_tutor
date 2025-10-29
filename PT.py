@@ -25,80 +25,76 @@ if "follow_up_question" not in st.session_state:
     st.session_state.follow_up_question = None
 if "awaiting_answer" not in st.session_state:
     st.session_state.awaiting_answer = False
+if "teacher_response" not in st.session_state:
+    st.session_state.teacher_response = None
 
 st.title("🧑‍🏫 Physics Tutor - Dual Agent App")
 
-terminate = st.button("🛑 End Conversation")
-
-if terminate:
-    st.success("Conversation ended. Thanks for learning physics!")
+# 🔄 Clear button to reset and ask a new question
+if st.button("🔄 Ask Another Question"):
     st.session_state.follow_up_question = None
     st.session_state.awaiting_answer = False
+    st.session_state.teacher_response = None
     st.session_state.student_followup_input = ""
-    st.stop()
+    st.experimental_rerun()
 
 # 🧑‍🎓 Student asks a physics question
-student_input = st.text_input("👨‍🎓 Student: Ask your question about physics")
+if not st.session_state.awaiting_answer:
+    student_input = st.text_input("👨‍🎓 Student: Ask your question about physics")
 
-if student_input and not st.session_state.awaiting_answer:
-    st.session_state.memory.chat_memory.add_user_message(student_input)
+    if student_input:
+        st.session_state.memory.chat_memory.add_user_message(student_input)
 
-    teacher_prompt = f"""
-    You are a physics teacher helping a student understand physics concepts.
+        teacher_prompt = f"""
+        You are a physics teacher helping a student understand physics concepts.
 
-    For the student's question, respond with:
-    1. A clear and concise explanation of the concept.
-    2. A real-world analogy or example.
-    3. A simple diagram or image description that could help visualize the concept.
-    4. Common misconceptions or mistakes students make.
-    5. A follow-up question to deepen understanding.
+        For the student's question, respond with:
+        1. A clear and concise explanation of the concept.
+        2. A real-world analogy or example.
+        3. A simple diagram or image description that could help visualize the concept.
+        4. Common misconceptions or mistakes students make.
+        5. A follow-up question to deepen understanding.
 
-    Question: {student_input}
-    """
-
-    try:
-        # 🧑‍🏫 Teacher's explanation
-        response = chat.invoke([HumanMessage(content=teacher_prompt)])
-        st.markdown("### 🧑‍🏫 Teacher's Response")
-        st.write(response.content)
-
-        # 🖼️ Try image generation
-        with st.spinner("Generating visual explanation..."):
-            try:
-                image_prompt = f"Physics diagram illustrating: {student_input}"
-                image_response = openai.images.generate(
-                    model="dall-e-3",
-                    prompt=image_prompt,
-                    size="1024x1024",
-                    quality="standard",
-                    n=1
-                )
-                image_url = image_response.data[0].url
-                st.image(image_url, caption="Visual Explanation")
-            except Exception as img_error:
-                st.warning(f"⚠️ Image generation skipped: {img_error}")
-
-        # 👨‍🎓 Ask specific follow-up question
-        follow_up_prompt = f"""
-        You just explained the following physics concept to a student: {student_input}
-
-        Now ask a specific follow-up question that applies the concept in a real-world scenario.
-        Make sure the question is clear and invites the student to reason through the physics.
-
-        Example: "What happens when you slam the brakes while driving?"
+        Question: {student_input}
         """
-        follow_up = chat.invoke([HumanMessage(content=follow_up_prompt)])
-        follow_up_text = follow_up.content.strip()
 
-        # Ensure it's not vague
-        if "what topic" in follow_up_text.lower() or "how can I assist" in follow_up_text.lower():
-            follow_up_text = "Imagine you're driving and suddenly slam the brakes. How do Newton's three laws apply?"
+        try:
+            # 🧑‍🏫 Teacher's explanation
+            response = chat.invoke([HumanMessage(content=teacher_prompt)])
+            st.session_state.teacher_response = response.content
+            st.markdown("### 🧑‍🏫 Teacher's Response")
+            st.write(response.content)
 
-        st.session_state.follow_up_question = follow_up_text
-        st.session_state.awaiting_answer = True
+            # 🖼️ Try image generation
+            with st.spinner("Generating visual explanation..."):
+                try:
+                    image_prompt = f"Physics diagram illustrating: {student_input}"
+                    image_response = openai.images.generate(
+                        model="dall-e-3",
+                        prompt=image_prompt,
+                        size="1024x1024",
+                        quality="standard",
+                        n=1
+                    )
+                    image_url = image_response.data[0].url
+                    st.image(image_url, caption="Visual Explanation")
+                except Exception as img_error:
+                    st.warning(f"⚠️ Image generation skipped: {img_error}")
 
-    except Exception as e:
-        st.error(f"❌ Error: {e}")
+            # Extract follow-up question from teacher response
+            for line in response.content.splitlines():
+                if "Follow-up question:" in line:
+                    st.session_state.follow_up_question = line.replace("Follow-up question:", "").strip()
+                    break
+
+            # Fallback if not found
+            if not st.session_state.follow_up_question:
+                st.session_state.follow_up_question = "Imagine you're driving and suddenly slam the brakes. How do Newton's three laws apply?"
+
+            st.session_state.awaiting_answer = True
+
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
 
 # 👨‍🎓 Student answers the follow-up question
 if st.session_state.awaiting_answer and st.session_state.follow_up_question:
@@ -126,9 +122,8 @@ if st.session_state.awaiting_answer and st.session_state.follow_up_question:
                 st.markdown("### 🧑‍🏫 Teacher's Evaluation")
                 st.write(evaluation.content)
 
-                # Reset state
-                st.session_state.follow_up_question = None
-                st.session_state.awaiting_answer = False
+                # Show clear button to proceed
+                st.success("✅ Evaluation complete. You can now ask another question using the 🔄 button above.")
 
             except Exception as e:
                 st.error(f"❌ Evaluation error: {e}")
