@@ -65,29 +65,37 @@ if not st.session_state.awaiting_answer:
             st.markdown("### 🧑‍🏫 Teacher's Response")
             st.write(response.content)
 
-            # 🔍 Extract follow-up question from teacher response
+            # 🔍 Extract follow-up question
             for line in response.content.splitlines():
                 if "Follow-up question:" in line:
-                    st.session_state.follow_up_question = line.replace("Follow-up question:", "").strip()
+                    candidate = line.replace("Follow-up question:", "").strip()
+                    if len(candidate) > 10 and "what topic" not in candidate.lower():
+                        st.session_state.follow_up_question = candidate
                     break
 
-            # 🧠 Fallback if not found
+            # 🧠 Fallback if not found or too vague
             if not st.session_state.follow_up_question:
                 fallback_prompt = f"""
                 You just explained this physics concept: "{student_input}"
 
-                The teacher forgot to include a follow-up question. Please generate one that applies this concept in a real-world scenario and invites the student to reason through it.
+                The teacher forgot to include a meaningful follow-up question. Please generate one that applies this concept in a real-world scenario and invites the student to reason through it.
                 """
                 fallback_response = chat.invoke([HumanMessage(content=fallback_prompt)])
                 st.session_state.follow_up_question = fallback_response.content.strip()
 
+            # 🎨 Extract diagram prompt
+            diagram_prompt = f"Physics diagram illustrating: {student_input}"  # default
+            for line in response.content.splitlines():
+                if "Simple diagram:" in line:
+                    diagram_prompt = line.replace("Simple diagram:", "").strip()
+                    break
+
             # 🖼️ Try image generation
             with st.spinner("Generating visual explanation..."):
                 try:
-                    image_prompt = f"Physics diagram illustrating: {student_input}"
                     image_response = openai.images.generate(
                         model="dall-e-3",
-                        prompt=image_prompt,
+                        prompt=diagram_prompt,
                         size="1024x1024",
                         quality="standard",
                         n=1
